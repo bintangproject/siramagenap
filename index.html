@@ -4,48 +4,67 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Berita Acara KBM - MA Darul Lughah Wal Karomah</title>
+  <link rel="icon" type="image/png" href="https://github.com/contohdfi/tesfoto/blob/main/logo%20madar.png?raw=true">
+  <link rel="apple-touch-icon" href="https://github.com/contohdfi/tesfoto/blob/main/logo%20madar.png?raw=true">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
     body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 88px; }
 
-    /* Sticky Header (Judul, Tanggal, Hapus Semua, & Pencarian) */
+    /* Sticky Header */
     .topbar {
       position: sticky; top: 0; z-index: 20; background: #1e3a5f; color: #fff;
       padding: 12px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.18);
     }
     .topbar-inner { max-width: 720px; margin: 0 auto; }
-    .topbar h1 { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.25; }
-    .topbar .subtitle { font-size: 12.5px; color: #cbd5e1; margin: 2px 0 10px; font-weight: 500; }
+
+    .brand-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .brand-logo {
+      width: 38px; height: 38px; border-radius: 8px; object-fit: contain;
+      background: rgba(255,255,255,0.95); padding: 3px; flex-shrink: 0;
+    }
+    .topbar h1 { margin: 0; font-size: 16.5px; font-weight: 700; line-height: 1.2; }
+    .topbar .subtitle { font-size: 12.5px; color: #cbd5e1; margin-top: 2px; font-weight: 500; }
 
     .meta-row {
-      display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 9px;
     }
     .meta-row input[type="date"] {
       padding: 6px 8px; border-radius: 6px; border: none; font-size: 13.5px; font-weight: 600;
       background: #fff; color: #0f172a;
     }
     .badge {
-      background: rgba(255,255,255,0.16); padding: 6px 9px; border-radius: 6px;
-      font-size: 12px; font-weight: 600;
+      background: rgba(255,255,255,0.16); padding: 6px 10px; border-radius: 6px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
     }
     .btn-clear {
-      margin-left: auto; padding: 6px 10px; border-radius: 6px;
+      margin-left: auto; padding: 6px 11px; border-radius: 6px;
       border: 1px solid rgba(254, 202, 202, 0.45); background: #dc2626;
       color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
     }
     .btn-clear:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    .search-wrap input {
-      width: 100%; padding: 9px 12px; border-radius: 8px; border: none;
-      font-size: 14px; background: #fff; color: #0f172a; outline: none;
+    /* Bar Pencarian + Filter Rombel (menempel di header) */
+    .filter-row {
+      display: grid; grid-template-columns: 1fr 165px; gap: 8px;
     }
-    .search-wrap input::placeholder { color: #64748b; }
+    .filter-row input, .filter-row select {
+      width: 100%; padding: 9px 10px; border-radius: 8px; border: none;
+      font-size: 13.5px; background: #fff; color: #0f172a; outline: none;
+    }
+    .filter-row input::placeholder { color: #64748b; }
+    .filter-row select { font-weight: 600; cursor: pointer; }
+    @media (max-width: 460px) {
+      .filter-row { grid-template-columns: 1fr 135px; }
+    }
 
     /* Petunjuk Ringkas */
     .hint-bar {
       max-width: 720px; margin: 10px auto 0; padding: 0 14px;
-      font-size: 12px; color: #475569; text-align: center;
+      font-size: 12px; color: #475569; text-align: center; line-height: 1.4;
     }
 
     /* Daftar Kartu Kelas */
@@ -56,7 +75,11 @@
     }
     .card-header {
       background: #1e3a5f; color: #fff; padding: 10px 14px; font-weight: 700; font-size: 14px;
+      display: flex; justify-content: space-between; align-items: center;
     }
+    .card-header.piket-header { background: #0f766e; }
+    .card-header small { font-weight: 500; font-size: 11.5px; opacity: 0.9; }
+
     .row-item {
       padding: 10px 14px; border-bottom: 1px solid #e2e8f0;
       display: flex; justify-content: space-between; align-items: center; gap: 10px;
@@ -66,7 +89,7 @@
     .info .title { font-weight: 600; font-size: 13px; color: #0f172a; }
     .info .sub { font-size: 12px; color: #475569; margin-top: 2px; }
 
-    /* Tombol Status S, I, A */
+    /* Tombol Status Kelas: S, I, A */
     .btn-group { display: flex; gap: 6px; flex-shrink: 0; }
     .st-btn {
       width: 36px; height: 36px; border-radius: 7px; border: 1px solid #cbd5e1;
@@ -76,6 +99,33 @@
     .st-btn.active-S { background: #2563eb; color: #fff; border-color: #2563eb; }
     .st-btn.active-I { background: #eab308; color: #000; border-color: #eab308; }
     .st-btn.active-A { background: #dc2626; color: #fff; border-color: #dc2626; }
+
+    /* Baris & Tombol Khusus Guru Piket (Hadir, Sakit, Izin, Alfa) */
+    .piket-item {
+      padding: 11px 14px; border-bottom: 1px solid #e2e8f0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .piket-item:last-child { border-bottom: none; }
+    .piket-top {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .piket-name { font-weight: 600; font-size: 13.5px; color: #0f172a; }
+    .tag-empty {
+      font-size: 11px; font-weight: 700; color: #b45309; background: #fef3c7;
+      padding: 2px 7px; border-radius: 99px;
+    }
+    .piket-btn-group {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    }
+    .pk-btn {
+      padding: 8px 4px; border-radius: 7px; border: 1px solid #cbd5e1;
+      background: #f8fafc; font-weight: 700; font-size: 12.5px; cursor: pointer;
+      color: #334155; transition: all 0.12s;
+    }
+    .pk-btn.active-Hadir { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .pk-btn.active-Sakit { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .pk-btn.active-Izin  { background: #eab308; color: #000; border-color: #eab308; }
+    .pk-btn.active-Alfa  { background: #dc2626; color: #fff; border-color: #dc2626; }
 
     /* Bilah Aksi Bawah */
     .footer-bar {
@@ -134,30 +184,42 @@
     }
     .btn-dl    { background: #2563eb; color: #fff; }
     .btn-drive { background: #e2e8f0; color: #1e293b; }
+
+    /* Penyempurnaan tampilan SweetAlert2 */
+    .swal2-popup { border-radius: 14px !important; font-family: inherit !important; }
+    .swal2-title { font-size: 18px !important; color: #0f172a !important; }
+    .swal2-html-container { font-size: 13.5px !important; color: #334155 !important; line-height: 1.5 !important; }
   </style>
 </head>
 <body>
 
   <header class="topbar">
     <div class="topbar-inner">
-      <h1>Berita Acara KBM</h1>
-      <div class="subtitle">MA Darul Lughah Wal Karomah</div>
+      <div class="brand-row">
+        <img class="brand-logo" src="https://github.com/contohdfi/tesfoto/blob/main/logo%20madar.png?raw=true" alt="Logo MA Darul Lughah Wal Karomah">
+        <div>
+          <h1>Berita Acara KBM</h1>
+          <div class="subtitle">MA Darul Lughah Wal Karomah</div>
+        </div>
+      </div>
 
       <div class="meta-row">
         <input type="date" id="tglInput" onchange="onDateChange()">
         <span class="badge" id="hariBadge">-</span>
-        <span class="badge" id="hadirBadge">Kehadiran: -</span>
         <button class="btn-clear" id="clearBtn" onclick="hapusSemuaInput()">Hapus Semua</button>
       </div>
 
-      <div class="search-wrap">
-        <input type="text" id="searchInput" placeholder="Cari kelas, mapel, atau nama guru..." oninput="renderList()">
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="Cari kelas, mapel, atau guru..." oninput="renderList()">
+        <select id="kelasFilter" onchange="renderList()" aria-label="Filter Rombel">
+          <option value="">Semua Rombel</option>
+        </select>
       </div>
     </div>
   </header>
 
   <div class="hint-bar">
-    Kosong = Hadir otomatis • Pilih <b>S</b> (Sakit), <b>I</b> (Izin), atau <b>A</b> (Alfa) jika tidak hadir.
+    Kelas: kosong = Hadir otomatis, pilih <b>S / I / A</b> jika tidak hadir • Guru Piket: wajib pilih <b>Hadir / Sakit / Izin / Alfa</b>.
   </div>
 
   <main class="container" id="content">
@@ -203,6 +265,8 @@
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
 
+    const PIKET_OPTS = ["Hadir", "Sakit", "Izin", "Alfa"];
+
     let appData = null;
     let pendingChanges = {};
     let currentBlobUrl = null;
@@ -215,9 +279,16 @@
         .replace(/"/g, "&quot;");
     }
 
-    /**
-     * Komunikasi ke GAS Backend via fetch (text/plain agar bebas blokir CORS preflight)
-     */
+    function normKelas(str) {
+      return String(str || "").toLowerCase().replace(/^kelas\s+/i, "").trim();
+    }
+
+    function normalizePiketVal(val) {
+      const low = String(val || "").trim().toLowerCase();
+      const found = PIKET_OPTS.find(opt => opt.toLowerCase() === low);
+      return found || "";
+    }
+
     async function callGasApi(action, payload = {}) {
       if (!GAS_API_URL || GAS_API_URL.includes("GANTI_DENGAN_URL")) {
         throw new Error("GAS_API_URL belum diisi di file index.html.");
@@ -231,15 +302,13 @@
       });
 
       const rawText = await res.text();
-      if (!res.ok) {
-        throw new Error(`HTTP Error ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
       let json;
       try {
         json = JSON.parse(rawText);
       } catch (e) {
-        throw new Error("Server GAS tidak mengembalikan JSON. Pastikan Code.gs sudah menggunakan versi API dan deployment sudah diperbarui ke Versi baru.");
+        throw new Error("Server GAS tidak mengembalikan JSON. Pastikan Code.gs sudah di-deploy ke Versi baru.");
       }
 
       if (json.status === "error") {
@@ -253,6 +322,7 @@
       document.getElementById("jpgBtn").disabled = disabled;
       document.getElementById("clearBtn").disabled = disabled;
       document.getElementById("tglInput").disabled = disabled;
+      document.getElementById("kelasFilter").disabled = disabled;
     }
 
     function updateSaveLabel() {
@@ -261,13 +331,38 @@
         count > 0 ? `Simpan (${count})` : "Simpan ke Sheet";
     }
 
+    function populateFilterDropdown(rombelList) {
+      const select = document.getElementById("kelasFilter");
+      const prevVal = select.value;
+
+      let html = `<option value="">Semua Rombel & Piket</option>`;
+      html += `<optgroup label="Kategori Cepat">`;
+      html += `<option value="__TAHFIDZ__">Semua Tahfidz</option>`;
+      html += `<option value="__TAKHASSUS__">Semua Takhassus</option>`;
+      html += `<option value="__PIKET__">Guru Piket</option>`;
+      html += `</optgroup>`;
+
+      if (Array.isArray(rombelList) && rombelList.length > 0) {
+        html += `<optgroup label="Per Rombel (Setting Jadwal)">`;
+        rombelList.forEach(r => {
+          html += `<option value="${esc(r)}">${esc(r)}</option>`;
+        });
+        html += `</optgroup>`;
+      }
+
+      select.innerHTML = html;
+      if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
+        select.value = prevVal;
+      }
+    }
+
     function applyDataToUI(data) {
       appData = data;
       pendingChanges = {};
       updateSaveLabel();
       document.getElementById("tglInput").value = data.tanggal;
       document.getElementById("hariBadge").textContent = data.hari || "-";
-      document.getElementById("hadirBadge").textContent = "Kehadiran: " + (data.kehadiran || "-");
+      populateFilterDropdown(data.rombelList || []);
       renderList();
     }
 
@@ -287,8 +382,17 @@
       if (!val) return;
 
       if (Object.keys(pendingChanges).length > 0) {
-        const ok = confirm("Ada perubahan yang belum disimpan. Tetap ganti tanggal?");
-        if (!ok) {
+        const konf = await Swal.fire({
+          icon: "warning",
+          title: "Perubahan Belum Disimpan",
+          text: "Masih ada input kehadiran yang belum disimpan ke sheet. Tetap ganti tanggal?",
+          showCancelButton: true,
+          confirmButtonText: "Ya, Ganti Tanggal",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#1e3a5f",
+          cancelButtonColor: "#64748b"
+        });
+        if (!konf.isConfirmed) {
           document.getElementById("tglInput").value = appData.tanggal;
           return;
         }
@@ -300,7 +404,12 @@
         const res = await callGasApi("updateTanggal", { dateStr: val });
         applyDataToUI(res.data);
       } catch (err) {
-        alert("Gagal ganti tanggal: " + err.message);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Mengubah Tanggal",
+          text: err.message,
+          confirmButtonColor: "#1e3a5f"
+        });
         if (appData) document.getElementById("tglInput").value = appData.tanggal;
         renderList();
       } finally {
@@ -321,6 +430,7 @@
       return "";
     }
 
+    /* Status Kelas: S / I / A (tap ulang = kosong / Hadir) */
     function setStatus(cell, val, btn) {
       const current = pendingChanges[cell] !== undefined ? pendingChanges[cell] : getOriginalVal(cell);
       const nextVal = (current === val) ? "" : val;
@@ -341,7 +451,30 @@
       updateSaveLabel();
     }
 
-    function renderButtons(cell, val) {
+    /* Status Khusus Guru Piket: Hadir / Sakit / Izin / Alfa (tidak boleh kosong) */
+    function setPiketStatus(cell, val, btn) {
+      const origNorm = normalizePiketVal(getOriginalVal(cell));
+      if (val === origNorm && getOriginalVal(cell).trim() !== "") {
+        delete pendingChanges[cell];
+      } else {
+        pendingChanges[cell] = val;
+      }
+
+      const group = btn.parentElement;
+      Array.from(group.children).forEach(b => {
+        b.className = "pk-btn";
+        if (b.dataset.val === val) {
+          b.classList.add("active-" + val);
+        }
+      });
+
+      const emptyTag = document.getElementById("tag-empty-" + cell);
+      if (emptyTag) emptyTag.style.display = "none";
+
+      updateSaveLabel();
+    }
+
+    function renderKelasButtons(cell, val) {
       const opts = ["S", "I", "A"];
       return `<div class="btn-group">` + opts.map(o => {
         const activeCls = val === o ? "active-" + o : "";
@@ -349,53 +482,90 @@
       }).join("") + `</div>`;
     }
 
+    function renderPiketButtons(cell, val) {
+      const normVal = normalizePiketVal(val);
+      return `<div class="piket-btn-group">` + PIKET_OPTS.map(o => {
+        const activeCls = normVal === o ? "active-" + o : "";
+        return `<button class="pk-btn ${activeCls}" data-val="${o}" onclick="setPiketStatus('${cell}','${o}',this)">${o}</button>`;
+      }).join("") + `</div>`;
+    }
+
     function renderList() {
       if (!appData) return;
-      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      const q         = document.getElementById("searchInput").value.toLowerCase().trim();
+      const filterVal = document.getElementById("kelasFilter").value;
       let html = "";
 
-      appData.kelasList.forEach(k => {
-        const matchKelas = String(k.namaKelas).toLowerCase().includes(q);
-        const filteredItems = matchKelas ? k.items : k.items.filter(it =>
-          String(it.pengajar).toLowerCase().includes(q) ||
-          String(it.mapel).toLowerCase().includes(q)
-        );
-        if (filteredItems.length === 0) return;
+      // 1. Bagian Daftar Kelas (Reguler, Tahfidz, Takhassus)
+      if (filterVal !== "__PIKET__") {
+        appData.kelasList.forEach(k => {
+          const namaLower = String(k.namaKelas).toLowerCase();
 
-        html += `<div class="card"><div class="card-header">${esc(k.namaKelas)}</div>`;
-        filteredItems.forEach(it => {
-          const val = pendingChanges[it.cell] !== undefined ? pendingChanges[it.cell] : it.ket;
-          html += `
-            <div class="row-item">
-              <div class="info">
-                <div class="title">Jam ${esc(it.jam)} • ${esc(it.mapel)}</div>
-                <div class="sub">${esc(it.pengajar)}</div>
-              </div>
-              ${renderButtons(it.cell, val)}
-            </div>`;
-        });
-        html += `</div>`;
-      });
+          // Cek filter dropdown
+          if (filterVal === "__TAHFIDZ__" && !namaLower.includes("tahfidz")) return;
+          if (filterVal === "__TAKHASSUS__" && !namaLower.includes("takhassus")) return;
+          if (filterVal && filterVal !== "__TAHFIDZ__" && filterVal !== "__TAKHASSUS__") {
+            if (normKelas(k.namaKelas) !== normKelas(filterVal)) return;
+          }
 
-      const piketFiltered = appData.guruPiket.filter(g =>
-        !q || String(g.nama).toLowerCase().includes(q) || "guru piket".includes(q)
-      );
-      if (piketFiltered.length > 0) {
-        html += `<div class="card"><div class="card-header">Daftar Hadir Guru Piket</div>`;
-        piketFiltered.forEach(g => {
-          const val = pendingChanges[g.cell] !== undefined ? pendingChanges[g.cell] : g.ket;
-          html += `
-            <div class="row-item">
-              <div class="info">
-                <div class="title">${esc(g.no)}. ${esc(g.nama)}</div>
-              </div>
-              ${renderButtons(g.cell, val)}
-            </div>`;
+          // Cek pencarian teks
+          const matchKelas = namaLower.includes(q);
+          const filteredItems = (!q || matchKelas) ? k.items : k.items.filter(it =>
+            String(it.pengajar).toLowerCase().includes(q) ||
+            String(it.mapel).toLowerCase().includes(q)
+          );
+          if (filteredItems.length === 0) return;
+
+          html += `<div class="card"><div class="card-header"><span>${esc(k.namaKelas)}</span></div>`;
+          filteredItems.forEach(it => {
+            const val = pendingChanges[it.cell] !== undefined ? pendingChanges[it.cell] : it.ket;
+            html += `
+              <div class="row-item">
+                <div class="info">
+                  <div class="title">Jam ${esc(it.jam)} • ${esc(it.mapel)}</div>
+                  <div class="sub">${esc(it.pengajar)}</div>
+                </div>
+                ${renderKelasButtons(it.cell, val)}
+              </div>`;
+          });
+          html += `</div>`;
         });
-        html += `</div>`;
       }
 
-      document.getElementById("content").innerHTML = html || '<div id="loading">Data tidak ditemukan.</div>';
+      // 2. Bagian Khusus Daftar Hadir Guru Piket
+      if (filterVal === "" || filterVal === "__PIKET__") {
+        const piketFiltered = appData.guruPiket.filter(g =>
+          !q || String(g.nama).toLowerCase().includes(q) || "guru piket".includes(q)
+        );
+        if (piketFiltered.length > 0) {
+          html += `
+            <div class="card">
+              <div class="card-header piket-header">
+                <span>Daftar Hadir Guru Piket</span>
+                <small>Wajib diisi</small>
+              </div>`;
+          piketFiltered.forEach(g => {
+            const val     = pendingChanges[g.cell] !== undefined ? pendingChanges[g.cell] : g.ket;
+            const normVal = normalizePiketVal(val);
+            const emptyBadge = normVal
+              ? ""
+              : `<span class="tag-empty" id="tag-empty-${g.cell}">Belum diisi</span>`;
+
+            html += `
+              <div class="piket-item">
+                <div class="piket-top">
+                  <div class="piket-name">${esc(g.no)}. ${esc(g.nama)}</div>
+                  ${emptyBadge}
+                </div>
+                ${renderPiketButtons(g.cell, val)}
+              </div>`;
+          });
+          html += `</div>`;
+        }
+      }
+
+      document.getElementById("content").innerHTML =
+        html || '<div id="loading">Tidak ada jadwal atau data yang cocok dengan filter.</div>';
     }
 
     function getPendingArray() {
@@ -405,44 +575,140 @@
       }));
     }
 
+    function countEmptyGuruPiket() {
+      if (!appData || !appData.guruPiket) return 0;
+      let count = 0;
+      appData.guruPiket.forEach(g => {
+        const val = pendingChanges[g.cell] !== undefined ? pendingChanges[g.cell] : g.ket;
+        if (!normalizePiketVal(val)) count++;
+      });
+      return count;
+    }
+
+    /* ================= SIMPAN KE SHEET (DENGAN DIALOG PROFESIONAL) ================= */
+
     async function saveAll() {
       const updates = getPendingArray();
       if (updates.length === 0) {
-        alert("Belum ada perubahan yang dipilih.");
+        Swal.fire({
+          icon: "info",
+          title: "Belum Ada Perubahan",
+          text: "Silakan pilih status kehadiran guru atau guru piket terlebih dahulu sebelum menyimpan.",
+          confirmButtonText: "Mengerti",
+          confirmButtonColor: "#1e3a5f"
+        });
         return;
       }
 
+      const emptyPiket = countEmptyGuruPiket();
+      const hari = document.getElementById("hariBadge").textContent;
+      const tgl  = document.getElementById("tglInput").value;
+      const notePiket = emptyPiket > 0
+        ? `<div style="margin-top:10px; padding:8px 10px; background:#fef3c7; color:#92400e; border-radius:8px; font-size:12.5px;">
+             <b>Pengingat:</b> Masih ada <b>${emptyPiket}</b> guru piket yang statusnya belum diisi (Hadir/Sakit/Izin/Alfa).
+           </div>`
+        : "";
+
+      const konf = await Swal.fire({
+        icon: "question",
+        title: "Simpan Data ke Sheet?",
+        html: `
+          Anda akan menyimpan <b>${updates.length} perubahan</b> data kehadiran untuk jadwal:<br>
+          <b>${esc(hari)}, ${esc(tgl)}</b>
+          ${notePiket}
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Ya, Simpan Sekarang",
+        cancelButtonText: "Periksa Lagi",
+        confirmButtonColor: "#1e3a5f",
+        cancelButtonColor: "#64748b",
+        reverseButtons: true
+      });
+
+      if (!konf.isConfirmed) return;
+
       setControlsDisabled(true);
-      document.getElementById("saveBtn").textContent = "Menyimpan...";
+      Swal.fire({
+        title: "Menyimpan Data...",
+        text: "Sedang memperbarui sheet Berita KBM, mohon tunggu.",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+      });
+
       try {
-        const res = await callGasApi("saveKbmData", { updates });
-        document.getElementById("hadirBadge").textContent = "Kehadiran: " + res.kehadiran;
-        alert("Berhasil disimpan! Tingkat kehadiran sekarang: " + res.kehadiran);
+        await callGasApi("saveKbmData", { updates });
         await loadData();
+        Swal.fire({
+          icon: "success",
+          title: "Data Berhasil Disimpan",
+          text: `${updates.length} perubahan telah tercatat pada sheet Berita KBM.`,
+          confirmButtonText: "Selesai",
+          confirmButtonColor: "#0d9488"
+        });
       } catch (err) {
-        alert("Gagal menyimpan: " + err.message);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Menyimpan Data",
+          text: err.message,
+          confirmButtonColor: "#dc2626"
+        });
       } finally {
         setControlsDisabled(false);
         updateSaveLabel();
       }
     }
 
+    /* ================= HAPUS SEMUA / RESET (DENGAN DIALOG PROFESIONAL) ================= */
+
     async function hapusSemuaInput() {
-      const konfirmasi = confirm(
-        "Hapus semua keterangan (S/I/A) yang sudah diinput sebelumnya pada sheet Berita KBM?\n\nSemua status akan dikosongkan (terhitung Hadir)."
-      );
-      if (!konfirmasi) return;
+      const konf = await Swal.fire({
+        icon: "warning",
+        title: "Reset Semua Inputan KBM?",
+        html: `
+          Tindakan ini akan membersihkan seluruh sisa input sebelumnya pada sheet <b>Berita KBM</b>:
+          <ul style="text-align:left; margin:10px 0 0; padding-left:18px; font-size:13px;">
+            <li>Seluruh status <b>S / I / A</b> kelas akan <b>dikosongkan</b> (terhitung Hadir).</li>
+            <li>Seluruh status <b>Daftar Hadir Guru Piket</b> akan direset menjadi <b>Hadir</b>.</li>
+          </ul>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Ya, Reset Semua",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#dc2626",
+        cancelButtonColor: "#64748b",
+        reverseButtons: true
+      });
+
+      if (!konf.isConfirmed) return;
 
       setControlsDisabled(true);
-      document.getElementById("clearBtn").textContent = "Menghapus...";
+      Swal.fire({
+        title: "Membersihkan Data...",
+        text: "Sedang mereset status kelas dan guru piket di Google Sheets.",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+      });
+
       try {
         const res = await callGasApi("clearAllKbm");
         applyDataToUI(res.data);
-        alert("Semua inputan sebelumnya berhasil dikosongkan.");
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil Direset",
+          text: "Semua inputan kelas telah dikosongkan dan status guru piket disetel ke Hadir.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0d9488"
+        });
       } catch (err) {
-        alert("Gagal menghapus semua inputan: " + err.message);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Mereset Data",
+          text: err.message,
+          confirmButtonColor: "#dc2626"
+        });
       } finally {
-        document.getElementById("clearBtn").textContent = "Hapus Semua";
         setControlsDisabled(false);
       }
     }
@@ -462,6 +728,28 @@
     }
 
     async function buatFotoHD() {
+      const emptyPiket = countEmptyGuruPiket();
+      if (emptyPiket > 0) {
+        const konfPiket = await Swal.fire({
+          icon: "warning",
+          title: "Status Guru Piket Belum Lengkap",
+          html: `Masih ada <b>${emptyPiket} guru piket</b> yang statusnya belum diisi (Hadir/Sakit/Izin/Alfa). Tetap buat foto sekarang?`,
+          showCancelButton: true,
+          confirmButtonText: "Tetap Buat Foto",
+          cancelButtonText: "Isi Dulu",
+          confirmButtonColor: "#0d9488",
+          cancelButtonColor: "#1e3a5f",
+          reverseButtons: true
+        });
+        if (!konfPiket.isConfirmed) {
+          document.getElementById("kelasFilter").value = "__PIKET__";
+          document.getElementById("searchInput").value = "";
+          renderList();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+      }
+
       const tgl = document.getElementById("tglInput").value;
       const updates = getPendingArray();
 
@@ -484,9 +772,6 @@
         if (updates.length > 0) {
           pendingChanges = {};
           updateSaveLabel();
-          if (res.kehadiran) {
-            document.getElementById("hadirBadge").textContent = "Kehadiran: " + res.kehadiran;
-          }
         }
 
         st.textContent = "2/3 Merender gambar Ultra-HD & merapikan tepi...";
