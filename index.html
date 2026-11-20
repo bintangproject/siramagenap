@@ -337,6 +337,9 @@
 
       let html = `<option value="">Semua Rombel & Piket</option>`;
       html += `<optgroup label="Kategori Cepat">`;
+      html += `<option value="__KELAS_X__">Semua Kelas X</option>`;
+      html += `<option value="__KELAS_XI__">Semua Kelas XI</option>`;
+      html += `<option value="__KELAS_XII__">Semua Kelas XII</option>`;
       html += `<option value="__TAHFIDZ__">Semua Tahfidz</option>`;
       html += `<option value="__TAKHASSUS__">Semua Takhassus</option>`;
       html += `<option value="__PIKET__">Guru Piket</option>`;
@@ -490,22 +493,27 @@
       }).join("") + `</div>`;
     }
 
-    function renderList() {
+function renderList() {
       if (!appData) return;
       const q         = document.getElementById("searchInput").value.toLowerCase().trim();
       const filterVal = document.getElementById("kelasFilter").value;
+      const quickKeys = ["__KELAS_X__", "__KELAS_XI__", "__KELAS_XII__", "__TAHFIDZ__", "__TAKHASSUS__"];
       let html = "";
 
       // 1. Bagian Daftar Kelas (Reguler, Tahfidz, Takhassus)
       if (filterVal !== "__PIKET__") {
         appData.kelasList.forEach(k => {
           const namaLower = String(k.namaKelas).toLowerCase();
+          const namaNorm  = normKelas(k.namaKelas);
 
-          // Cek filter dropdown
-          if (filterVal === "__TAHFIDZ__" && !namaLower.includes("tahfidz")) return;
+          // Cek filter dropdown (pakai batas kata \b agar X tidak menangkap XI/XII)
+          if (filterVal === "__KELAS_X__"   && !/^x\b/i.test(namaNorm))   return;
+          if (filterVal === "__KELAS_XI__"  && !/^xi\b/i.test(namaNorm))  return;
+          if (filterVal === "__KELAS_XII__" && !/^xii\b/i.test(namaNorm)) return;
+          if (filterVal === "__TAHFIDZ__"   && !namaLower.includes("tahfidz")) return;
           if (filterVal === "__TAKHASSUS__" && !namaLower.includes("takhassus")) return;
-          if (filterVal && filterVal !== "__TAHFIDZ__" && filterVal !== "__TAKHASSUS__") {
-            if (normKelas(k.namaKelas) !== normKelas(filterVal)) return;
+          if (filterVal && !quickKeys.includes(filterVal)) {
+            if (namaNorm !== normKelas(filterVal)) return;
           }
 
           // Cek pencarian teks
