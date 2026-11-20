@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Berita Acara KBM - MA Darul Lughah Wal Karomah</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: #f1f5f9; color: #0f172a; padding-bottom: 88px; }
+
+    /* Sticky Header (Judul, Tanggal, Hapus Semua, & Pencarian) */
+    .topbar {
+      position: sticky; top: 0; z-index: 20; background: #1e3a5f; color: #fff;
+      padding: 12px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    }
+    .topbar-inner { max-width: 720px; margin: 0 auto; }
+    .topbar h1 { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.25; }
+    .topbar .subtitle { font-size: 12.5px; color: #cbd5e1; margin: 2px 0 10px; font-weight: 500; }
+
+    .meta-row {
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .meta-row input[type="date"] {
+      padding: 6px 8px; border-radius: 6px; border: none; font-size: 13.5px; font-weight: 600;
+      background: #fff; color: #0f172a;
+    }
+    .badge {
+      background: rgba(255,255,255,0.16); padding: 6px 9px; border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+    }
+    .btn-clear {
+      margin-left: auto; padding: 6px 10px; border-radius: 6px;
+      border: 1px solid rgba(254, 202, 202, 0.45); background: #dc2626;
+      color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .btn-clear:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .search-wrap input {
+      width: 100%; padding: 9px 12px; border-radius: 8px; border: none;
+      font-size: 14px; background: #fff; color: #0f172a; outline: none;
+    }
+    .search-wrap input::placeholder { color: #64748b; }
+
+    /* Petunjuk Ringkas */
+    .hint-bar {
+      max-width: 720px; margin: 10px auto 0; padding: 0 14px;
+      font-size: 12px; color: #475569; text-align: center;
+    }
+
+    /* Daftar Kartu Kelas */
+    .container { padding: 10px 14px 12px; max-width: 720px; margin: 0 auto; }
+    .card {
+      background: #fff; border-radius: 10px; margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
+    }
+    .card-header {
+      background: #1e3a5f; color: #fff; padding: 10px 14px; font-weight: 700; font-size: 14px;
+    }
+    .row-item {
+      padding: 10px 14px; border-bottom: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .row-item:last-child { border-bottom: none; }
+    .info { flex: 1; min-width: 0; }
+    .info .title { font-weight: 600; font-size: 13px; color: #0f172a; }
+    .info .sub { font-size: 12px; color: #475569; margin-top: 2px; }
+
+    /* Tombol Status S, I, A */
+    .btn-group { display: flex; gap: 6px; flex-shrink: 0; }
+    .st-btn {
+      width: 36px; height: 36px; border-radius: 7px; border: 1px solid #cbd5e1;
+      background: #f8fafc; font-weight: 700; font-size: 13.5px; cursor: pointer;
+      color: #334155; transition: all 0.12s;
+    }
+    .st-btn.active-S { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .st-btn.active-I { background: #eab308; color: #000; border-color: #eab308; }
+    .st-btn.active-A { background: #dc2626; color: #fff; border-color: #dc2626; }
+
+    /* Bilah Aksi Bawah */
+    .footer-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+      padding: 10px 14px; border-top: 1px solid #cbd5e1; z-index: 20;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+    }
+    .footer-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 8px; }
+    .btn-footer {
+      flex: 1; padding: 12px 10px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 700; cursor: pointer; color: #fff;
+    }
+    .btn-save { background: #1e3a5f; }
+    .btn-jpg  { background: #0d9488; }
+    .btn-footer:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    #loading { text-align: center; padding: 40px 16px; color: #475569; font-size: 14px; }
+
+    /* Modal Pratinjau Foto HD */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      background: rgba(15, 23, 42, 0.65); padding: 16px;
+      align-items: center; justify-content: center; overflow-y: auto;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      background: #fff; width: 100%; max-width: 480px; border-radius: 14px;
+      padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      max-height: 92vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    }
+    .modal-header h3 { margin: 0; font-size: 16px; color: #0f172a; }
+    .modal-close {
+      background: #e2e8f0; border: none; width: 30px; height: 30px; border-radius: 50%;
+      font-size: 16px; font-weight: 700; cursor: pointer; color: #334155;
+    }
+    .modal-status {
+      text-align: center; padding: 24px 10px; color: #0d9488; font-size: 14px; font-weight: 600;
+    }
+    .modal-error {
+      display: none; background: #fee2e2; color: #b91c1c; padding: 12px;
+      border-radius: 8px; font-size: 13px; margin-bottom: 10px;
+    }
+    .preview-wrap { display: none; }
+    .preview-wrap img {
+      width: 100%; max-height: 52vh; object-fit: contain;
+      border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; margin-bottom: 8px;
+    }
+    .meta-info { font-size: 12px; color: #64748b; text-align: center; margin-bottom: 12px; }
+    .modal-actions { display: flex; gap: 8px; }
+    .btn-link {
+      flex: 1; text-align: center; padding: 12px 10px; border-radius: 8px;
+      font-size: 13.5px; font-weight: 700; text-decoration: none;
+    }
+    .btn-dl    { background: #2563eb; color: #fff; }
+    .btn-drive { background: #e2e8f0; color: #1e293b; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>Berita Acara KBM</h1>
+      <div class="subtitle">MA Darul Lughah Wal Karomah</div>
+
+      <div class="meta-row">
+        <input type="date" id="tglInput" onchange="onDateChange()">
+        <span class="badge" id="hariBadge">-</span>
+        <span class="badge" id="hadirBadge">Kehadiran: -</span>
+        <button class="btn-clear" id="clearBtn" onclick="hapusSemuaInput()">Hapus Semua</button>
+      </div>
+
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Cari kelas, mapel, atau nama guru..." oninput="renderList()">
+      </div>
+    </div>
+  </header>
+
+  <div class="hint-bar">
+    Kosong = Hadir otomatis • Pilih <b>S</b> (Sakit), <b>I</b> (Izin), atau <b>A</b> (Alfa) jika tidak hadir.
+  </div>
+
+  <main class="container" id="content">
+    <div id="loading">Memuat jadwal KBM...</div>
+  </main>
+
+  <footer class="footer-bar">
+    <div class="footer-inner">
+      <button class="btn-footer btn-save" id="saveBtn" onclick="saveAll()">Simpan ke Sheet</button>
+      <button class="btn-footer btn-jpg" id="jpgBtn" onclick="buatFotoHD()">Buat Foto HD</button>
+    </div>
+  </footer>
+
+  <!-- Modal Pratinjau & Unduh Foto HD -->
+  <div class="modal-overlay" id="jpgModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Foto Berita Acara KBM (HD)</h3>
+        <button class="modal-close" onclick="tutupModal()">×</button>
+      </div>
+      <div class="modal-status" id="modalStatus">Menyiapkan data...</div>
+      <div class="modal-error" id="modalError"></div>
+      <div class="preview-wrap" id="previewWrap">
+        <p style="font-size:12.5px; font-weight:600; color:#059669; margin:0 0 8px; text-align:center;">
+          Tersimpan di folder KBM Madar!
+        </p>
+        <img id="previewImg" src="" alt="Preview Berita KBM">
+        <div class="meta-info" id="metaInfo"></div>
+        <div class="modal-actions">
+          <a id="linkDownload" href="#" download="" class="btn-link btn-dl">Simpan ke Galeri HP</a>
+          <a id="linkDrive" href="#" target="_blank" class="btn-link btn-drive">Buka di Drive</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // KONFIGURASI: Tempel URL Web App GAS (/exec) Anda di bawah ini
+    // =========================================================================
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwMbjlXiinOKvZLahrqjqwFo_jMsOs920el39OSUWIrFYZyhNUOQijXfnz-oE9le4W7/execs";
+
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    let appData = null;
+    let pendingChanges = {};
+    let currentBlobUrl = null;
+
+    function esc(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /**
+     * Komunikasi ke GAS Backend via fetch (text/plain agar bebas blokir CORS preflight)
+     */
+    async function callGasApi(action, payload = {}) {
+      if (!GAS_API_URL || GAS_API_URL.includes("GANTI_DENGAN_URL")) {
+        throw new Error("GAS_API_URL belum diisi di file index.html.");
+      }
+
+      const res = await fetch(GAS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action, ...payload })
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP Error ${res.status}`);
+      }
+
+      const json = await res.json();
+      if (json.status === "error") {
+        throw new Error(json.pesan || "Terjadi kesalahan pada server GAS.");
+      }
+      return json;
+    }
+
+    function setControlsDisabled(disabled) {
+      document.getElementById("saveBtn").disabled = disabled;
+      document.getElementById("jpgBtn").disabled = disabled;
+      document.getElementById("clearBtn").disabled = disabled;
+      document.getElementById("tglInput").disabled = disabled;
+    }
+
+    function updateSaveLabel() {
+      const count = Object.keys(pendingChanges).length;
+      document.getElementById("saveBtn").textContent =
+        count > 0 ? `Simpan (${count})` : "Simpan ke Sheet";
+    }
+
+    function applyDataToUI(data) {
+      appData = data;
+      pendingChanges = {};
+      updateSaveLabel();
+      document.getElementById("tglInput").value = data.tanggal;
+      document.getElementById("hariBadge").textContent = data.hari || "-";
+      document.getElementById("hadirBadge").textContent = "Kehadiran: " + (data.kehadiran || "-");
+      renderList();
+    }
+
+    async function loadData() {
+      document.getElementById("content").innerHTML = '<div id="loading">Memuat jadwal KBM...</div>';
+      try {
+        const res = await callGasApi("getKbmData");
+        applyDataToUI(res.data);
+      } catch (err) {
+        document.getElementById("content").innerHTML =
+          `<div id="loading" style="color:#b91c1c;">Gagal memuat data:<br>${esc(err.message)}</div>`;
+      }
+    }
+
+    async function onDateChange() {
+      const val = document.getElementById("tglInput").value;
+      if (!val) return;
+
+      if (Object.keys(pendingChanges).length > 0) {
+        const ok = confirm("Ada perubahan yang belum disimpan. Tetap ganti tanggal?");
+        if (!ok) {
+          document.getElementById("tglInput").value = appData.tanggal;
+          return;
+        }
+      }
+
+      setControlsDisabled(true);
+      document.getElementById("content").innerHTML = '<div id="loading">Mengambil jadwal hari baru...</div>';
+      try {
+        const res = await callGasApi("updateTanggal", { dateStr: val });
+        applyDataToUI(res.data);
+      } catch (err) {
+        alert("Gagal ganti tanggal: " + err.message);
+        if (appData) document.getElementById("tglInput").value = appData.tanggal;
+        renderList();
+      } finally {
+        setControlsDisabled(false);
+      }
+    }
+
+    function getOriginalVal(cell) {
+      if (!appData) return "";
+      for (const k of appData.kelasList) {
+        for (const it of k.items) {
+          if (it.cell === cell) return it.ket;
+        }
+      }
+      for (const g of appData.guruPiket) {
+        if (g.cell === cell) return g.ket;
+      }
+      return "";
+    }
+
+    function setStatus(cell, val, btn) {
+      const current = pendingChanges[cell] !== undefined ? pendingChanges[cell] : getOriginalVal(cell);
+      const nextVal = (current === val) ? "" : val; // Tap ulang untuk kosongkan (Hadir)
+
+      if (nextVal === getOriginalVal(cell)) {
+        delete pendingChanges[cell];
+      } else {
+        pendingChanges[cell] = nextVal;
+      }
+
+      const group = btn.parentElement;
+      Array.from(group.children).forEach(b => {
+        b.className = "st-btn";
+        if (b.dataset.val === nextVal) {
+          b.classList.add("active-" + nextVal);
+        }
+      });
+      updateSaveLabel();
+    }
+
+    function renderButtons(cell, val) {
+      const opts = ["S", "I", "A"];
+      return `<div class="btn-group">` + opts.map(o => {
+        const activeCls = val === o ? "active-" + o : "";
+        return `<button class="st-btn ${activeCls}" data-val="${o}" onclick="setStatus('${cell}','${o}',this)">${o}</button>`;
+      }).join("") + `</div>`;
+    }
+
+    function renderList() {
+      if (!appData) return;
+      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      let html = "";
+
+      appData.kelasList.forEach(k => {
+        const matchKelas = String(k.namaKelas).toLowerCase().includes(q);
+        const filteredItems = matchKelas ? k.items : k.items.filter(it =>
+          String(it.pengajar).toLowerCase().includes(q) ||
+          String(it.mapel).toLowerCase().includes(q)
+        );
+        if (filteredItems.length === 0) return;
+
+        html += `<div class="card"><div class="card-header">${esc(k.namaKelas)}</div>`;
+        filteredItems.forEach(it => {
+          const val = pendingChanges[it.cell] !== undefined ? pendingChanges[it.cell] : it.ket;
+          html += `
+            <div class="row-item">
+              <div class="info">
+                <div class="title">Jam ${esc(it.jam)} • ${esc(it.mapel)}</div>
+                <div class="sub">${esc(it.pengajar)}</div>
+              </div>
+              ${renderButtons(it.cell, val)}
+            </div>`;
+        });
+        html += `</div>`;
+      });
+
+      const piketFiltered = appData.guruPiket.filter(g =>
+        !q || String(g.nama).toLowerCase().includes(q) || "guru piket".includes(q)
+      );
+      if (piketFiltered.length > 0) {
+        html += `<div class="card"><div class="card-header">Daftar Hadir Guru Piket</div>`;
+        piketFiltered.forEach(g => {
+          const val = pendingChanges[g.cell] !== undefined ? pendingChanges[g.cell] : g.ket;
+          html += `
+            <div class="row-item">
+              <div class="info">
+                <div class="title">${esc(g.no)}. ${esc(g.nama)}</div>
+              </div>
+              ${renderButtons(g.cell, val)}
+            </div>`;
+        });
+        html += `</div>`;
+      }
+
+      document.getElementById("content").innerHTML = html || '<div id="loading">Data tidak ditemukan.</div>';
+    }
+
+    function getPendingArray() {
+      return Object.keys(pendingChanges).map(cell => ({
+        cell: cell,
+        value: pendingChanges[cell]
+      }));
+    }
+
+    async function saveAll() {
+      const updates = getPendingArray();
+      if (updates.length === 0) {
+        alert("Belum ada perubahan yang dipilih.");
+        return;
+      }
+
+      setControlsDisabled(true);
+      document.getElementById("saveBtn").textContent = "Menyimpan...";
+      try {
+        const res = await callGasApi("saveKbmData", { updates });
+        document.getElementById("hadirBadge").textContent = "Kehadiran: " + res.kehadiran;
+        alert("Berhasil disimpan! Tingkat kehadiran sekarang: " + res.kehadiran);
+        await loadData();
+      } catch (err) {
+        alert("Gagal menyimpan: " + err.message);
+      } finally {
+        setControlsDisabled(false);
+        updateSaveLabel();
+      }
+    }
+
+    async function hapusSemuaInput() {
+      const konfirmasi = confirm(
+        "Hapus semua keterangan (S/I/A) yang sudah diinput sebelumnya pada sheet Berita KBM?\n\nSemua status akan dikosongkan (terhitung Hadir)."
+      );
+      if (!konfirmasi) return;
+
+      setControlsDisabled(true);
+      document.getElementById("clearBtn").textContent = "Menghapus...";
+      try {
+        const res = await callGasApi("clearAllKbm");
+        applyDataToUI(res.data);
+        alert("Semua inputan sebelumnya berhasil dikosongkan.");
+      } catch (err) {
+        alert("Gagal menghapus semua inputan: " + err.message);
+      } finally {
+        document.getElementById("clearBtn").textContent = "Hapus Semua";
+        setControlsDisabled(false);
+      }
+    }
+
+    /* ================= EXPORT FOTO JPG ULTRA-HD ================= */
+
+    function tutupModal() {
+      document.getElementById("jpgModal").classList.remove("show");
+    }
+
+    function setModalError(pesan) {
+      document.getElementById("modalStatus").style.display = "none";
+      const errBox = document.getElementById("modalError");
+      errBox.textContent = "Gagal: " + pesan;
+      errBox.style.display = "block";
+      setControlsDisabled(false);
+    }
+
+    async function buatFotoHD() {
+      const tgl = document.getElementById("tglInput").value;
+      const updates = getPendingArray();
+
+      setControlsDisabled(true);
+      document.getElementById("modalError").style.display  = "none";
+      document.getElementById("previewWrap").style.display = "none";
+      const st = document.getElementById("modalStatus");
+      st.style.display = "block";
+      st.textContent = updates.length > 0
+        ? "1/3 Menyimpan input & mengambil lembar Berita KBM..."
+        : "1/3 Mengambil lembar Berita KBM...";
+      document.getElementById("jpgModal").classList.add("show");
+
+      try {
+        const res = await callGasApi("ambilPdfBeritaKBM", {
+          tanggalInput: tgl,
+          pendingUpdates: updates
+        });
+
+        if (updates.length > 0) {
+          pendingChanges = {};
+          updateSaveLabel();
+          if (res.kehadiran) {
+            document.getElementById("hadirBadge").textContent = "Kehadiran: " + res.kehadiran;
+          }
+        }
+
+        st.textContent = "2/3 Merender gambar Ultra-HD & merapikan tepi...";
+        const hasilCanvas = await renderDanCropHD(res.pdfBase64);
+
+        st.textContent = "3/3 Menyimpan Foto HD ke folder KBM Madar...";
+        const saveRes = await callGasApi("simpanJpgKeDrive", {
+          jpgDataUrl: hasilCanvas.dataUrl,
+          namaFile: res.namaFile
+        });
+
+        st.style.display = "none";
+        if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = URL.createObjectURL(hasilCanvas.blob);
+
+        document.getElementById("previewImg").src = currentBlobUrl;
+        document.getElementById("metaInfo").textContent =
+          `${saveRes.namaFile} (${hasilCanvas.width} × ${hasilCanvas.height} px)`;
+
+        const dl = document.getElementById("linkDownload");
+        dl.href = currentBlobUrl;
+        dl.download = saveRes.namaFile;
+
+        document.getElementById("linkDrive").href = saveRes.fileUrl;
+        document.getElementById("previewWrap").style.display = "block";
+        setControlsDisabled(false);
+
+      } catch (err) {
+        setModalError(err.message);
+      }
+    }
+
+    async function renderDanCropHD(pdfBase64) {
+      const raw = atob(pdfBase64);
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
+      const pdf  = await pdfjsLib.getDocument({ data: bytes }).promise;
+      const page = await pdf.getPage(1);
+
+      const baseVp      = page.getViewport({ scale: 1.0 });
+      const renderScale = 3600 / Math.max(baseVp.width, baseVp.height);
+      const viewport    = page.getViewport({ scale: renderScale });
+
+      const fullCanvas  = document.createElement("canvas");
+      fullCanvas.width  = Math.round(viewport.width);
+      fullCanvas.height = Math.round(viewport.height);
+      const ctx = fullCanvas.getContext("2d", { willReadFrequently: true });
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+      const imgData = ctx.getImageData(0, 0, fullCanvas.width, fullCanvas.height).data;
+      const w = fullCanvas.width;
+      const h = fullCanvas.height;
+      let minX = w, minY = h, maxX = 0, maxY = 0;
+
+      for (let y = 0; y < h; y += 2) {
+        const rowOffset = y * w * 4;
+        for (let x = 0; x < w; x += 2) {
+          const idx = rowOffset + x * 4;
+          if (imgData[idx] < 248 || imgData[idx + 1] < 248 || imgData[idx + 2] < 248) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      let finalCanvas = fullCanvas;
+      if (maxX > minX && maxY > minY) {
+        const padding = 44;
+        const cropW   = maxX - minX + 2;
+        const cropH   = maxY - minY + 2;
+
+        finalCanvas        = document.createElement("canvas");
+        finalCanvas.width  = cropW + padding * 2;
+        finalCanvas.height = cropH + padding * 2;
+
+        const cropCtx = finalCanvas.getContext("2d");
+        cropCtx.fillStyle = "#ffffff";
+        cropCtx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+        cropCtx.drawImage(fullCanvas, minX, minY, cropW, cropH, padding, padding, cropW, cropH);
+      }
+
+      const dataUrl = finalCanvas.toDataURL("image/jpeg", 0.94);
+      const blob    = await new Promise(resolve => finalCanvas.toBlob(resolve, "image/jpeg", 0.94));
+
+      return {
+        dataUrl: dataUrl,
+        blob: blob,
+        width: finalCanvas.width,
+        height: finalCanvas.height
+      };
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
