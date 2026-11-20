@@ -137,7 +137,9 @@
     .btn-footer {
       flex: 1; padding: 12px 10px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 700; cursor: pointer; color: #fff;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     }
+    .btn-footer svg { width: 18px; height: 18px; flex-shrink: 0; }
     .btn-save { background: #1e3a5f; }
     .btn-jpg  { background: #0d9488; }
     .btn-footer:disabled { background: #94a3b8; cursor: not-allowed; }
@@ -212,7 +214,7 @@
       <div class="filter-row">
         <input type="text" id="searchInput" placeholder="Cari kelas, mapel, atau guru..." oninput="renderList()">
         <select id="kelasFilter" onchange="renderList()" aria-label="Filter Rombel">
-          <option value="">Semua Rombel</option>
+          <option value="">Semua Rombel & Piket</option>
         </select>
       </div>
     </div>
@@ -228,8 +230,23 @@
 
   <footer class="footer-bar">
     <div class="footer-inner">
-      <button class="btn-footer btn-save" id="saveBtn" onclick="saveAll()">Simpan ke Sheet</button>
-      <button class="btn-footer btn-jpg" id="jpgBtn" onclick="buatFotoHD()">Buat Foto HD</button>
+      <button class="btn-footer btn-save" id="saveBtn" onclick="saveAll()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span id="saveBtnText">Simpan</span>
+      </button>
+
+      <button class="btn-footer btn-jpg" id="jpgBtn" onclick="buatFotoHD()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Download Foto</span>
+      </button>
     </div>
   </footer>
 
@@ -327,8 +344,8 @@
 
     function updateSaveLabel() {
       const count = Object.keys(pendingChanges).length;
-      document.getElementById("saveBtn").textContent =
-        count > 0 ? `Simpan (${count})` : "Simpan ke Sheet";
+      document.getElementById("saveBtnText").textContent =
+        count > 0 ? `Simpan (${count})` : "Simpan";
     }
 
     function populateFilterDropdown(rombelList) {
@@ -493,7 +510,7 @@
       }).join("") + `</div>`;
     }
 
-function renderList() {
+    function renderList() {
       if (!appData) return;
       const q         = document.getElementById("searchInput").value.toLowerCase().trim();
       const filterVal = document.getElementById("kelasFilter").value;
@@ -593,7 +610,7 @@ function renderList() {
       return count;
     }
 
-    /* ================= SIMPAN KE SHEET (DENGAN DIALOG PROFESIONAL) ================= */
+    /* ================= SIMPAN KE SHEET ================= */
 
     async function saveAll() {
       const updates = getPendingArray();
@@ -667,7 +684,7 @@ function renderList() {
       }
     }
 
-    /* ================= HAPUS SEMUA / RESET (DENGAN DIALOG PROFESIONAL) ================= */
+    /* ================= HAPUS SEMUA / RESET ================= */
 
     async function hapusSemuaInput() {
       const konf = await Swal.fire({
@@ -741,9 +758,9 @@ function renderList() {
         const konfPiket = await Swal.fire({
           icon: "warning",
           title: "Status Guru Piket Belum Lengkap",
-          html: `Masih ada <b>${emptyPiket} guru piket</b> yang statusnya belum diisi (Hadir/Sakit/Izin/Alfa). Tetap buat foto sekarang?`,
+          html: `Masih ada <b>${emptyPiket} guru piket</b> yang statusnya belum diisi (Hadir/Sakit/Izin/Alfa). Tetap download foto sekarang?`,
           showCancelButton: true,
-          confirmButtonText: "Tetap Buat Foto",
+          confirmButtonText: "Tetap Download",
           cancelButtonText: "Isi Dulu",
           confirmButtonColor: "#0d9488",
           cancelButtonColor: "#1e3a5f",
